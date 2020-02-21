@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from pandas.io.parsers import read_csv
 
 def carga_csv(file_name):
@@ -14,25 +15,27 @@ def coste(X, Y, Theta):
     return aux.sum() / (2*len(X))
 
 def descenso_gradiente(X, Y, alpha):
-    theta= np.array([[0], [0]])
-    for i in np.arange(6):
+    theta= np.array([[0.], [0.]])
+    for i in np.arange(1500):
         aux = hipotesis(X, theta)
-        temp0 = theta[0] - alpha*(1/len(X))*np.sum(aux - Y)
+        temp0 = theta[0][0] - alpha*(1/len(X))*np.sum(aux - Y)
         aux2 = aux - Y
-        aux2 = np.dot(aux2, X)
-        temp1 = theta[1] - alpha*(1/len(X))*np.sum(aux2)
-        theta[0] = temp0
-        theta[1] = temp1
-        print(theta)
-        print(coste(X,Y, theta))
+        aux2 = aux2 * Xp
+        temp1 = theta[1][0] - alpha*(1/len(X))*np.sum(aux2)
+        theta[0][0] = temp0
+        theta[1][0] = temp1
+        #print(theta)
+        #print(coste(X,Y, theta))
+    return theta
          
 
 datos = carga_csv('ex1data1.csv')
 
 X = datos[:, :-1]
+Xp = X
 m = np.shape(X)[0]
 
-Y = datos[:, -1]
+Y = datos[:, -1:]
 n = np.shape(X)[1]
 
 X = np.hstack([np.ones([m,1]), X])
@@ -40,6 +43,15 @@ X = np.hstack([np.ones([m,1]), X])
 alpha = 0.01
 
 #thetas, costes = 
-descenso_gradiente(X, Y, alpha) 
+theta = descenso_gradiente(X, Y, alpha) 
 
-print("FIN")
+H = hipotesis(X, theta)
+X = datos[:, 0]
+Y = datos[:, 1]
+
+plt.figure()
+plt.scatter(X, Y, c='red', label='Training cases', marker='x')
+plt.plot(X, H, c='blue', label='Regression line', linestyle='-')
+plt.legend()
+plt.savefig('recta.png')
+print("Finished")
