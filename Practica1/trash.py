@@ -1,6 +1,0 @@
-plt.figure()
-plt.scatter(ths[0], ths[1], c="red", label="Training cases", marker='x')
-#plt.plot(X, H, c="blue", label="Regression line", linestyle='-')
-plt.legend()
-plt.savefig("gradient_descent.png")
-print("Finished gradient_descent.png")
