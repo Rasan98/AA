@@ -96,13 +96,27 @@ plt.ylabel("Costes")
 
 plt.savefig("alphas.png")
 
-Xq = np.array([[2500], [3]])
-Xqp = calcula_normalizado(np.transpose(Xq), medias, desvs)
-Xqp = np.hstack([np.ones([m,1]), X])
+#Xq = np.array([2500, 3])
+Xq = np.array([2000,3])
+
+Xq_norm = calcula_normalizado(np.transpose(Xq), medias, desvs)
+Xq_norm = np.hstack([np.ones([1]), Xq_norm])
+Xq = np.hstack([np.ones([1]), Xq])
 
 Theta, costes, iter = descenso_gradiente(X, Y, 1.2, Theta, n)
 
 
+
+Yp = hipotesis(Xq_norm, Theta)
+
+aux = np.dot(np.transpose(X), X)
+aux = np.linalg.pinv(aux)
+aux = np.dot(aux, X.transpose())
+eqTheta = np.dot(aux, Y)
+
+Y = hipotesis(Xq, eqTheta)
+
+print(Yp, Y)
 
 print("FIN")
 
