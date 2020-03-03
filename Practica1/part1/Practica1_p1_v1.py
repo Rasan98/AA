@@ -93,7 +93,7 @@ arrays = make_data([-10, 10], [-1, 4], X, Y)
 
 
 #Plot the surface
-surf = ax.plot_surface(arrays[0], arrays[1], arrays[2], cmap=cm.coolwarm, linewidth= 0, antialiased=False)
+surf = ax.plot_surface(arrays[0], arrays[1], arrays[2], cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
 #Customize the z and x axis
 ax.set_zlim(0, 700)

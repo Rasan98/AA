@@ -1,18 +1,24 @@
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from pandas.io.parsers import read_csv
 
-def calcula_normalizado(valor, med, desv):
-    return (valor - med)/desv
-
-def normaliza(X):
-    medias = np.array([])
-    desvs = np.array([])
-    for i in range(1, np.shape(X)[1]):
-        medias = np.append(medias, np.mean(X[:,i]))
-        desvs = np.append(desvs, np.std(X[:,i]))
-        X[:,i] = calcula_normalizado(X[:,i], medias[i-1], desvs[i-1])
-    return (medias, desvs)
+def make_data(t0_range, t1_range, X, Y):
+    """Genera las matrices X,Y,Z para generar un plot en 3D
+    """
+    step = 0.1
+    Theta0 = np.arange(t0_range[0], t0_range[1], step)
+    Theta1 = np.arange(t1_range[0], t1_range[1], step)
+    Theta0, Theta1 = np.meshgrid(Theta0, Theta1)
+    # Theta0 y Theta1 tienen las misma dimensiones, de forma que
+    # cogiendo un elemento de cada uno se generan las coordenadas x,y
+    # de todos los puntos de la rejilla
+    Coste = np.empty_like(Theta0)
+    for ix, iy in np.ndindex(Theta0.shape):
+        Coste[ix, iy] = coste(X, Y, [[Theta0[ix, iy]], [Theta1[ix, iy]]])
+    return [Theta0, Theta1, Coste]
 
 def carga_csv(file_name):
     valores = read_csv(file_name, header = None).values
@@ -27,7 +33,6 @@ def coste(X, Y, Theta):
     return aux.sum() / (2*len(X))
 
 def descenso_gradiente(X, Y, alpha, Theta, n):
-    
     ths = np.array([[0.]])
     temps = np.array([[0.]])
     for i in range(n-1):
@@ -49,38 +54,29 @@ def descenso_gradiente(X, Y, alpha, Theta, n):
         if (costes[-2] - costes[-1]) < 0.001:
             break
     #print(j)
-    return (Theta, costes, j) 
-         
+    return (Theta, costes, j)          
 
-datos = carga_csv("ex1data2.csv")
+datos = carga_csv("ex1data1.csv")
 
 X = datos[:, :-1]
-Y = datos[:, -1:]
-
 m = np.shape(X)[0]
-X = np.hstack([np.ones([m,1]), X])
+
+Y = datos[:, -1:]
 n = np.shape(X)[1]
 
-Xp = np.copy(X)
+X = np.hstack([np.ones([m,1]), X])
 
-medias, desvs = normaliza(X)
+alphas = np.array([0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1])
+
+colors = np.array(["blue","green","red","cyan","magenta","yellow","black"])
+labels = np.array(["0.001", "0.003", "0.01", "0.03", "0.1", "0.3", "1"])
+
+plt.figure()
 
 Theta = np.array([[0.]])
 
 for i in range(n-1):
     Theta = np.vstack((Theta, [0.]))
-
-
-#alpha = 0.01
-
-#Theta, ths, costes = descenso_gradiente(X, Y, alpha, Theta, n) 
-
-j = 0
-alphas = np.array([0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1])
-
-colors = np.array(["blue","green","red","cyan","magenta","yellow","black"])
-labels = np.array(["0.001", "0.003", "0.01", "0.03", "0.1", "0.3", "1"])
-plt.figure()
 
 for i in range(np.shape(alphas)[0]):
     #j = j+1
@@ -90,34 +86,9 @@ for i in range(np.shape(alphas)[0]):
     plt.plot(np.arange(iter + 1), costes, c=colors[i], label=labels[i], linestyle='-')
 
 plt.legend()
-
 plt.xlabel("Num iter")
 plt.ylabel("Costes")
-
 plt.savefig("alphas.png")
-
-#Xq = np.array([2500, 3])
-Xq = np.array([2600,3])
-
-Xq_norm = calcula_normalizado(np.transpose(Xq), medias, desvs)
-Xq_norm = np.hstack([np.ones([1]), Xq_norm])
-
-
-Xq = np.hstack([np.ones([1]), Xq])
-
-Theta, costes, iter = descenso_gradiente(X, Y, 1.2, Theta, n)
-
-Yp = hipotesis(Xq_norm, Theta)
-
-X = Xp
-aux = np.dot(np.transpose(X), X)
-aux = np.linalg.pinv(aux)
-aux = np.dot(aux, X.transpose())
-eqTheta = np.dot(aux, Y)
-
-Y = hipotesis(Xq, eqTheta)
-
-print(Yp, Y)
 
 print("FIN")
 

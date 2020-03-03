@@ -48,7 +48,7 @@ def descenso_gradiente(X, Y, alpha):
         ths0 = np.append(ths0, temp0)
         ths1 = np.append(ths1, temp0)
         costes = np.append(costes, coste(X,Y, theta))
-        if (costes[-2] - costes[-1]) < 0.000000001:
+        if (costes[-2] - costes[-1]) < 0.001:
             break
         #print(theta)
         #print(coste(X,Y, theta))
