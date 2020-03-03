@@ -57,11 +57,15 @@ datos = carga_csv("ex1data2.csv")
 X = datos[:, :-1]
 Y = datos[:, -1:]
 
-
 m = np.shape(X)[0]
 X = np.hstack([np.ones([m,1]), X])
 n = np.shape(X)[1]
+
+Xp = np.copy(X)
+
 medias, desvs = normaliza(X)
+
+print(X)
 
 Theta = np.array([[0.]])
 
@@ -74,10 +78,9 @@ for i in range(n-1):
 #Theta, ths, costes = descenso_gradiente(X, Y, alpha, Theta, n) 
 
 j = 0
-alphas = np.random.uniform(0.001, 3, 50)
-#alphas = np.array([0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1])
+alphas = np.array([0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3])
 alphas.sort()
-print(alphas)
+
 min_costes = np.array([])
 num_iter = np.array([])
 for i in alphas:
@@ -85,7 +88,7 @@ for i in alphas:
     a, costes, iter = descenso_gradiente(X, Y, i, Theta, n)
     min_costes = np.append(min_costes, costes[-1])
     num_iter = np.append(num_iter, iter)
-    print(j, "  ", costes[-1], "  ", i) 
+    #print(j, "  ", costes[-1], "  ", i) 
 
 plt.figure()
 plt.plot(num_iter, min_costes, c="blue", label="Alpha", linestyle='-')
@@ -101,14 +104,15 @@ Xq = np.array([2000,3])
 
 Xq_norm = calcula_normalizado(np.transpose(Xq), medias, desvs)
 Xq_norm = np.hstack([np.ones([1]), Xq_norm])
+
+
 Xq = np.hstack([np.ones([1]), Xq])
 
 Theta, costes, iter = descenso_gradiente(X, Y, 1.2, Theta, n)
 
-
-
 Yp = hipotesis(Xq_norm, Theta)
 
+X = Xp
 aux = np.dot(np.transpose(X), X)
 aux = np.linalg.pinv(aux)
 aux = np.dot(aux, X.transpose())
