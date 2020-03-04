@@ -97,7 +97,7 @@ plt.ylabel("Costes")
 plt.savefig("alphas.png")
 
 #Xq = np.array([2500, 3])
-Xq = np.array([2600,3])
+Xq = np.array([1650,3])
 
 Xq_norm = calcula_normalizado(np.transpose(Xq), medias, desvs)
 Xq_norm = np.hstack([np.ones([1]), Xq_norm])
