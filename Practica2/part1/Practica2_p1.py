@@ -43,8 +43,7 @@ def pinta_frontera_recta(X, Y, theta):
     # el cuarto parámetro es el valor de z cuya frontera se
     # quiere pintar
     plt.contour(xx1, xx2, h, [0.5], linewidths=1, colors='b')
-    plt.savefig("frontera.png")
-    plt.close()
+    
 
 datos = carga_csv("ex2data1.csv")
 
@@ -59,7 +58,18 @@ Theta = np.zeros(n)
 result = opt.fmin_tnc(func=coste, x0=Theta, fprime=gradiente, args=(X, Y))
 theta_opt = result[0]
 
-pinta_frontera_recta(X, Y, theta_opt)
+pinta_frontera_recta(X[:, 1:], Y, theta_opt)
+
+aux = np.where(Y == 1)
+plt.scatter(X[aux, 1], X[aux, 2], c="black", label="admitted", marker="+")
+aux = np.where(Y == 0)
+plt.scatter(X[aux, 1], X[aux, 2], c="yellow", label="not admitted", marker="o")
+#plt.plot(np.random.uniform(30, 100, 100), hipotesis(X, theta_opt))
+plt.legend()
+plt.xlabel("Exam 1 score")
+plt.ylabel("Exam 2 score")
+plt.savefig("frontera.png")
+plt.close()
 
 print("FIN")
 
