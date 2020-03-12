@@ -26,7 +26,6 @@ def gradiente(Theta, X, Y):
         grad[i] = (1/m)*np.sum((hipotesis(X,Theta) - Y) * X[:,i:i+1])
     return grad  
 
-
 def fun(Hi, Y):
     return (Hi < 0.5 and Y == 0) or (Hi >= 0.5 and Y == 1)
 
@@ -35,11 +34,6 @@ def calcula_porcentaje(X, Y, Theta):
     aux = [fun(H[i], Y[i, 0]) for i in range(len(H))]
     return np.sum(aux)/len(H)
     
-def calcula_porcentajeVector(X, Y, Theta):
-    H = np.ravel(np.transpose(hipotesis(X, Theta)))
-    aux = [fun(H[i], Y[i, 0]) for i in range(len(H))]
-    return np.sum(aux)/len(H)
-
 def pinta_frontera_recta(X, Y, theta):
     plt.figure()
     x1_min, x1_max = X[:, 0].min(), X[:, 0].max()
@@ -57,6 +51,17 @@ def pinta_frontera_recta(X, Y, theta):
     # quiere pintar
     plt.contour(xx1, xx2, h, [0.5], linewidths=1, colors='b')
     
+def print_data(X,Y):
+    plt.figure()
+    aux = np.where(Y == 1)
+    plt.scatter(X[aux, 1], X[aux, 2], c="black", label="admitted", marker="+")
+    aux = np.where(Y == 0)
+    plt.scatter(X[aux, 1], X[aux, 2], c="yellow", label="not admitted", marker="o")
+    #plt.plot(np.random.uniform(30, 100, 100), hipotesis(X, theta_opt))
+    plt.legend()
+    plt.xlabel("Exam 1 score")
+    plt.ylabel("Exam 2 score")
+    plt.savefig("data.png")
 
 
 
@@ -67,6 +72,8 @@ m = np.shape(X)[0]
 X = np.hstack([np.ones([m,1]), X])
 n = np.shape(X)[1]
 Y = datos[:, -1:]
+
+print_data(X,Y)
 
 Theta = np.zeros(n)
 
