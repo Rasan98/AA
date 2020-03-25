@@ -18,9 +18,13 @@ def coste(Theta, X, Y, reg):
     aux2 = (reg/(2*m))*aux2
     return aux + aux2 
 
+def coste2(Theta,X,Y):
+    H = sigmoide(np.matmul(X, Theta))
+    return (- 1 / (len(X))) * (np.dot(Y, np.log(H)) + np.dot((1 - Y), np.log(1 - H)))
+
 def gradienteRecurs(Theta, X, Y, reg):
     m = np.shape(X)[0]
-    grad = np.ravel((1/m)*np.dot(np.transpose(X), (hipotesis(X,Theta) - Y))) + (reg/m)*Theta 
+    grad = np.ravel((1/m)*np.dot(np.transpose(X), (hipotesis(X,Theta) - Y))) #+ (reg/m)*Theta 
     grad[0] = (1/m)*np.sum((hipotesis(X,Theta) - Y) * X[:,0:1])
     return grad  
 
@@ -32,10 +36,14 @@ def oneVsAll(Xp, Yp, num_etiquetas, reg):
     thetas = np.empty((0,n), float)
     ies = np.arange(1, num_etiquetas + 1)
     for i in ies:
+        Y = np.copy(Yp)
         Theta = np.zeros(n)
-        z = np.where(Yp == i)
-        X = Xp[z[0]]
-        Y = Yp[z[0]]
+        tr = np.where(Yp == i)
+        fls = np.where(Yp != i)
+        X = Xp
+        Y[tr[0]] = 1
+        Y[fls[0]] = 0
+        print(Y)
         result = opt.fmin_tnc(func=coste, x0=Theta, fprime=gradienteRecurs, args=(X, Y, reg))
         thetas = np.vstack((thetas, result[0]))
     return thetas
