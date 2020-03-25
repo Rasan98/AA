@@ -12,20 +12,11 @@ def hipotesis(X, Theta):
 def coste(Theta, X, Y, reg):
     m = np.shape(X)[0]
     H = hipotesis(X, Theta)
-    aux = Y*np.log(H) + (1-Y)*np.log(1 - H)  
+    aux = Y*np.log(H + 1e-6) + (1-Y)*np.log(1 - H + 1e-6)  
     aux = -aux.sum()/m
     aux2 = np.sum((Theta ** 2))
     aux2 = (reg/(2*m))*aux2
-    return aux + aux2
-
-def gradienteIter(Theta, X, Y, lda):
-    m = np.shape(X)[0]
-    n = np.shape(X)[1]
-    grad = np.zeros(n)
-    grad[0] = (1/m)*np.sum((hipotesis(X,Theta) - Y) * X[:,0:1])
-    for i in range(1, n):
-        grad[i] = (1/m)*np.sum((hipotesis(X,Theta) - Y) * X[:,i:i+1]) + (lda/m)*Theta[i]
-    return grad  
+    return aux + aux2 
 
 def gradienteRecurs(Theta, X, Y, reg):
     m = np.shape(X)[0]
@@ -33,19 +24,13 @@ def gradienteRecurs(Theta, X, Y, reg):
     grad[0] = (1/m)*np.sum((hipotesis(X,Theta) - Y) * X[:,0:1])
     return grad  
 
-def fun(Hi, Y):
-    return (Hi < 0.5 and Y == 0) or (Hi >= 0.5 and Y == 1)
-
-def calcula_porcentaje(X, Y, Theta):
-    H = np.ravel(np.transpose(hipotesis(X, Theta)))
-    aux = [fun(H[i], Y[i, 0]) for i in range(len(H))]
-    return np.sum(aux)/len(H)
-
+def fun(thetas, X, etiq):
+    return np.argmax(np.dot(thetas, X)) + 1 == etiq
+    
 def oneVsAll(Xp, Yp, num_etiquetas, reg):
     n = np.shape(Xp)[1]
     thetas = np.empty((0,n), float)
-    ies = np.arange(1, num_etiquetas)
-    ies = np.insert(ies, 0, num_etiquetas)
+    ies = np.arange(1, num_etiquetas + 1)
     for i in ies:
         Theta = np.zeros(n)
         z = np.where(Yp == i)
@@ -59,9 +44,9 @@ def oneVsAll(Xp, Yp, num_etiquetas, reg):
 data = loadmat("ex3data1.mat")
 X = data['X']
 Y = data['y']
-Y = Y.astype(int)
+Y = Y.astype(int) 
 m = np.shape(X)[0]
-n = np.shape(X)[1]
+
 
 sample = np.random.choice(X.shape[0],10)
 plt.imshow(X[sample,:].reshape(-1,20).T)
@@ -70,6 +55,19 @@ plt.savefig('prueba.png')
 
 X = np.hstack([np.ones([m,1]), X])
 
+
 thetas = oneVsAll(X, Y, 10, 0.1)
+
+aux = [fun(thetas, X[i], Y[i][0]) for i in range(m)]
+
+print("Sol -->", np.sum(aux)/m)
+
+#i = 756
+
+#calculo = np.dot(thetas, X[i])
+
+#print("Sol -->", np.argmax(calculo) + 1, "realmente es ", Y[i])
+
+
 
 print("FIN")

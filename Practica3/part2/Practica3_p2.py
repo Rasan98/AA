@@ -6,10 +6,7 @@ def sigmoide(X):
     return 1/(1+np.exp(-X))
 
 def fun(a3, etiq):
-    if etiq == 10:
-        return np.argmax(a3) == 9
-    else:
-        return np.argmax(a3) == (etiq - 1)
+    return np.argmax(a3) + 1 == etiq
 
 data = loadmat("ex3data1.mat")
 X = data['X']
@@ -23,6 +20,7 @@ weights = loadmat("ex3weights.mat")
 theta1, theta2 = weights["Theta1"], weights["Theta2"]
 
 a1 = X
+
 z2 = np.dot(theta1, np.transpose(a1))
 a2 = sigmoide(z2)
 a2 = np.vstack((np.ones(np.shape(a2)[1]), a2))
