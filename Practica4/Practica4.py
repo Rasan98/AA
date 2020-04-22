@@ -21,11 +21,11 @@ def forwprop(theta1, theta2, X):
     a3 = sigmoide(z3)
     return a2.transpose(), a3.transpose()
 
-def coste(theta1, theta2, X, y, lda, H):
+def coste(theta1, theta2, m, y, lda, H):
     aux = (-y*np.log((H + 1e-10))) - ((1-y)*np.log((1-H + 1e-10)))
-    aux = (1 / (len(X))) * np.sum(aux)
+    aux = (1 / m) * np.sum(aux)
     aux2 = np.sum(theta1[:,1:] ** 2) + np.sum(theta2[:,1:] ** 2)
-    aux2 = (aux2*lda)/(2*len(X))
+    aux2 = (aux2*lda)/(2*m)
     return aux + aux2
 
 def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, y, reg):
@@ -35,7 +35,7 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, y, reg):
     a1 = np.hstack([np.ones([m, 1]), X])
     
     a2, h = forwprop(theta1, theta2, a1)       
-    cost = coste(theta1, theta2, a1, y, reg, h)       
+    cost = coste(theta1, theta2, m, y, reg, h)       
     
     inc1 = np.zeros((theta1.shape[0], theta1.shape[1]))
     inc2 = np.zeros((theta2.shape[0], theta2.shape[1]))   
