@@ -22,15 +22,13 @@ def forwprop(theta1, theta2, X):
     return a2.transpose(), a3.transpose()
 
 def coste(theta1, theta2, X, y, lda, H):
-    aux = (-y*np.log((H))) - ((1-y)*np.log((1-H)))
+    aux = (-y*np.log((H + 1e-10))) - ((1-y)*np.log((1-H + 1e-10)))
     aux = (1 / (len(X))) * np.sum(aux)
     aux2 = np.sum(theta1[:,1:] ** 2) + np.sum(theta2[:,1:] ** 2)
     aux2 = (aux2*lda)/(2*len(X))
     return aux + aux2
 
 def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, y, reg):
-    #weights = loadmat("ex4weights.mat")
-    #theta1, theta2 = weights["Theta1"], weights["Theta2"]
     theta1 = np.reshape(params_rn[: (num_ocultas * (num_entradas + 1))], (num_ocultas, (num_entradas+1)))
     theta2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
     m = X.shape[0]       
@@ -50,7 +48,6 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, y, reg):
         inc1 = inc1 + np.dot(delta2[1:], aux[np.newaxis,:])
         aux = a2[i]
         inc2 = inc2 + np.dot(delta3, aux[np.newaxis,:])
-
     D1 = inc1/m
     D1[:,1:] = D1[:,1:] + (reg/m)*theta1[:,1:]
     D2 = inc2/m
@@ -64,14 +61,25 @@ def codificaY(Y, num_etiquetas):
     Yp = np.delete(Yp, 0, 1) 
     return Yp
 
+def fun(h, etiq):
+    return np.argmax(h) == etiq - 1
+
+def calculate_precision(theta1, theta2, X, Y):
+    a1 = np.hstack([np.ones([len(X), 1]), X])
+    _ , h = forwprop(theta1, theta2, a1)
+    aux = [fun(h[i], Y[i][0]) for i in range(len(X))]
+    return np.sum(aux)/len(X)
+
+
+
 data = loadmat("ex4data1.mat")
 X = data['X']
 Y = data['y']
 Y = Y.astype(int)
 
 num_etiquetas = 10
-Y = codificaY(Y, num_etiquetas)
-Y = Y.astype(int)
+y = codificaY(Y, num_etiquetas)
+y = y.astype(int)
 
 num_entradas = 400
 num_ocultas = 25
@@ -80,10 +88,21 @@ params_2 = pesosAleatorios(num_ocultas, num_etiquetas)
 params_rn = np.concatenate((np.ravel(params_1), np.ravel(params_2)))
 reg = 1
 
-#print(chk.checkNNGradients(backprop, 1))
+print(chk.checkNNGradients(backprop, 1))
 #print(backprop(params_rn, num_entradas, num_ocultas, num_etiquetas,X, Y, reg))
 
-opt.minimize(fun=backprop, x0=params_rn, args=(num_entradas, num_ocultas, num_etiquetas, X, Y, reg),
-              method="TNC", jac = True, options={"maxite = 70"})
+res = opt.minimize(fun=backprop, x0=params_rn, args=(num_entradas, num_ocultas, num_etiquetas, X, y, reg),
+                    method="TNC", jac = True, options={"maxiter":70})
+
+thetas = res.x
+theta1 = np.reshape(thetas[:(num_ocultas * (num_entradas + 1))], (num_ocultas, (num_entradas+1)))
+theta2 = np.reshape(thetas[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
+
+#weights = loadmat("ex4weights.mat")
+#theta1, theta2 = weights["Theta1"], weights["Theta2"]
+
+
+print(calculate_precision(theta1, theta2, X, Y))
+
 
 print("Fin" * 5)
