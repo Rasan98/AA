@@ -38,7 +38,6 @@ res = opt.minimize(fun=costeYgrad, x0=Theta, args=(X, Y, reg),
 plt.figure()
 plt.scatter(X, Y, c="red", marker='x')
 plt.plot(X, hipotesis(np.hstack([np.ones([m, 1]), X]),res.x), c="blue", linestyle='-')
-plt.legend()
 plt.xlabel("Change in water level (x)")
 plt.ylabel("Wate flowing out of the dam (y)")
 plt.savefig("line.png")

@@ -26,21 +26,31 @@ Yval = data['yval']
 Xtest = data['Xtest']
 Ytest = data['ytest']
 
-Theta = np.array([1,1])
-
 reg = 0
 
-print(costeYgrad(Theta, X, Y, 1))
+Hs = np.array([])
 
-res = opt.minimize(fun=costeYgrad, x0=Theta, args=(X, Y, reg),
-                    method="TNC", jac = True, options={"maxiter":70})
+for i in range(1,m+1):
+    Theta = np.array([1,1])
+    res = opt.minimize(fun=costeYgrad, x0=Theta, args=(X[0:i], Y[0:i], reg),
+                        method="TNC", jac = True, options={"maxiter":70})
+    Hs = np.concatenate((Hs,res.x))
+
+Hs = np.reshape(Hs, (m,2))
+
+Htrain = np.dot(np.hstack([np.ones([X.shape[0], 1]), X]), Hs.transpose())
+ErrTrain = ((Htrain - Y) ** 2)/(2*X.shape[0])
+ErrTrain = np.sum(ErrTrain, 0)
+Hval = np.dot(np.hstack([np.ones([Xval.shape[0], 1]), Xval]), Hs.transpose())
+ErrVal = ((Hval - Yval) ** 2)/(2*Xval.shape[0])
+ErrVal = np.sum(ErrVal, 0)
 
 plt.figure()
-plt.scatter(X, Y, c="red", marker='x')
-plt.plot(X, hipotesis(np.hstack([np.ones([m, 1]), X]),res.x), c="blue", linestyle='-')
+plt.plot(np.arange(1, X.shape[0]+1), ErrTrain, c="blue", label="Train", linestyle='-')
+plt.plot(np.arange(1, X.shape[0]+1), ErrVal, c="orange", label="Cross validation", linestyle='-')
 plt.legend()
-plt.xlabel("Change in water level (x)")
-plt.ylabel("Wate flowing out of the dam (y)")
-plt.savefig("line.png")
+plt.xlabel("Number of training examples")
+plt.ylabel("Error")
+plt.savefig("Curva.png")
 
 print("Fin"*5)
