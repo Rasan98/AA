@@ -21,11 +21,14 @@ def transformaX(X,p):
        X = np.hstack((X, (X[:,:1] ** i)))
     return X
 
-def normalizaX(X):
+def calc_param_norm(X):
     medias = np.mean(X,0)
     desv = np.std(X,0)
+    return medias, desv
+
+def aplica_norm(X, medias, desv):
     Xnorm = (X-medias)/desv
-    return Xnorm, medias, desv
+    return Xnorm
 
 data = loadmat("ex5data1.mat")
 X = data['X']
@@ -41,45 +44,52 @@ reg = 0
 p = 8
 
 Xpol = transformaX(X,p)
-Xnorm, medias, desv = normalizaX(Xpol)
-Theta = np.ones(p+1)
+medias, desv = calc_param_norm(Xpol)
+Xnorm = aplica_norm(Xpol, medias, desv)
+
+Theta = np.zeros(p+1)
 
 res = opt.minimize(fun=costeYgrad, x0=Theta, args=(Xnorm, Y, reg),
-                    method="TNC", jac = True, options={"maxiter":70})
+                    method="TNC", jac = True)
 
-print(res.x)
-
+#Generar la gráfica
 plt.figure()
 plt.scatter(X, Y, c="red", marker='x')
-plt.plot(X, hipotesis(np.hstack([np.ones([m, 1]), X]),res.x), c="blue", linestyle='-')
+newXs = np.arange(np.amin(X)-3, np.amax(X)+5, 0.05)[:, np.newaxis]
+newXspol = transformaX(newXs, p)
+newXsnorm = aplica_norm(newXspol, medias, desv)
+plt.plot(newXs, hipotesis(np.hstack([np.ones([newXsnorm.shape[0], 1]), newXsnorm]),res.x), c="blue", linestyle='-')
 plt.xlabel("Change in water level (x)")
-plt.ylabel("Wate flowing out of the dam (y)")
+plt.ylabel("Water flowing out of the dam (y)")
 plt.savefig("poly_reg.png")
 
-#Hs = np.array([])
-#ErrTrain = np.array([])
-#for i in range(0,m):
-#    Theta = np.array([1,1])
-#    res = opt.minimize(fun=costeYgrad, x0=Theta, args=(X[0:i+1], Y[0:i+1], reg),
-#                        method="TNC", jac = True, options={"maxiter":70})
-#    Hs = np.concatenate((Hs,res.x))
-#    aux = np.dot(np.hstack([np.ones([i+1, 1]), X[0:i+1]]), res.x[:, np.newaxis] )
-#    aux = np.sum(((aux - Y[0:i+1]) ** 2)/(2*(i+1)))
-#    ErrTrain = np.concatenate((ErrTrain,np.array([aux])))
-#
-#
-#Hs = np.reshape(Hs, (m,2))
-#
-#Hval = np.dot(np.hstack([np.ones([Xval.shape[0], 1]), Xval]), Hs.transpose())
-#ErrVal = ((Hval - Yval) ** 2)/(2*Xval.shape[0])
-#ErrVal = np.sum(ErrVal, 0)
-#
-#plt.figure()
-#plt.plot(np.arange(1, X.shape[0]+1), ErrTrain, c="blue", label="Train", linestyle='-')
-#plt.plot(np.arange(1, X.shape[0]+1), ErrVal, c="orange", label="Cross validation", linestyle='-')
-#plt.legend()
-#plt.xlabel("Number of training examples")
-#plt.ylabel("Error")
-#plt.savefig("Curva.png")
-#
-#print("Fin"*5)
+#Generar la curva de aprendizaje
+Hs = np.array([])
+ErrTrain = np.array([])
+for i in range(1,m+1):
+    Theta = np.zeros(p+1)
+    res = opt.minimize(fun=costeYgrad, x0=Theta, args=(Xnorm[0:i], Y[0:i], reg),
+                        method="TNC", jac = True)
+    Hs = np.concatenate((Hs,res.x))
+    aux = np.dot(np.hstack([np.ones([i, 1]), Xnorm[0:i]]), res.x[:, np.newaxis] )
+    aux = np.sum(((aux - Y[0:i]) ** 2)/(2*(i)))
+    ErrTrain = np.concatenate((ErrTrain,np.array([aux])))
+
+
+Hs = np.reshape(Hs, (m,p+1))
+
+Xval_pol = transformaX(Xval, p)
+Xval_norm = aplica_norm(Xval_pol, medias, desv)
+Hval = np.dot(np.hstack([np.ones([Xval_norm.shape[0], 1]), Xval_norm]), Hs.transpose())
+ErrVal = ((Hval - Yval) ** 2)/(2*Xval.shape[0])
+ErrVal = np.sum(ErrVal, 0)
+
+plt.figure()
+plt.plot(np.arange(1, X.shape[0]+1), ErrTrain, c="blue", label="Train", linestyle='-')
+plt.plot(np.arange(1, X.shape[0]+1), ErrVal, c="orange", label="Cross validation", linestyle='-')
+plt.legend()
+plt.xlabel("Number of training examples")
+plt.ylabel("Error")
+plt.savefig("Curva.png")
+
+print("Fin"*5)
