@@ -11,7 +11,7 @@ def costeYgrad(Theta, X, Y, reg):
     m = X.shape[0]
     x = np.hstack([np.ones([m, 1]), X])
     H = hipotesis(x, Theta)
-    coste = (np.sum((H-Y.ravel()) ** 2))/(2*m) + ((Theta[1] ** 2) * reg)/(2*m)
+    coste = (np.sum((H-Y.ravel()) ** 2))/(2*m) + (np.sum(Theta[1:] ** 2) * reg)/(2*m)
     grad = np.sum((H-Y.ravel())[:,np.newaxis]*x,0)/m
     grad[1:] += (reg/m)*(Theta[1:] ** 2)
     return coste, grad
