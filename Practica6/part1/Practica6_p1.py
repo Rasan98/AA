@@ -78,18 +78,19 @@ X3val = data3['Xval']
 Y3val = data3['yval']
 m = X3val.shape[0]
 
-pairs = np.empty(64, dtype=tuple)
+pairs = np.empty((64,2))
 errors = np.empty(64)
 for i in range(8):
     for j in range(8):
-        new = (values[i],values[j])
-        pairs = np.concatenate(pairs, np.array([new]))
+        new = np.array([values[i],values[j]])
+        pairs[8*i + j] = new
         aux = train_rbf_svm(X3, Y3, new[0], new[1])
-        H = aux.predict(X3val.ravel())
+        H = aux.predict(X3val)
         error = np.sum((H - Y3val.ravel())**2)*(1/(2*m))
-        errors = np.concatenate(errors, np.array([error]))
-
+        errors[8*i + j] = error
+print(errors)
 opt = pairs[np.argmin(errors)]
+print(opt)
 aux = train_rbf_svm(X3, Y3, opt[0], opt[1])
 visualize_boundary(X3, Y3, aux, "data3")
 
