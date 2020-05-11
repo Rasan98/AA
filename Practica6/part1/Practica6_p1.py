@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat     
-import scipy.optimize as opt
 from sklearn import svm
 import matplotlib.gridspec as gridspec
 
