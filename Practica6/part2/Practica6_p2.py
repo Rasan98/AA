@@ -73,14 +73,17 @@ def distribute_data(easy, hard, spam, porcent, data_divisor=1): #1--> spam; 0 --
     aux1 = (easy.shape[0] - (teasy + veasy)) + (hard.shape[0] - (thard + vhard))
     aux2 =  spam.shape[0] - (tspam + vspam)
     Ytest = np.concatenate((np.zeros(aux1), np.ones(aux2)))
-    return (Xt, Yt), (Xval, Yval), (Xtest, Ytest)
+    test_sections = (easy[(teasy+veasy):,:].shape[0], easy[(teasy+veasy):,:].shape[0] + hard[(thard+vhard):,:].shape[0])
+    return (Xt, Yt), (Xval, Yval), (Xtest, Ytest), test_sections
 
 data = loadmat("email_vectors.mat")
 easy = data["easy"]
 hard = data["hard"]
 spam = data["spam"]
 
-train, cross_val, test = distribute_data(easy, hard, spam, [60, 20, 20])
+porc = [60, 20, 20]
+
+train, cross_val, test, test_sections = distribute_data(easy, hard, spam, [60, 20, 20])
 
 values = np.array([0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30])
 
@@ -98,18 +101,22 @@ for i in range(8):
         errors[8*i + j] = error
         my_dict[str(8*i + j)] = (new,error)
 
-savemat("hyper.mat", my_dict)
 
 opt = pairs[np.argmin(errors)]
-print("optimum hyperparameters -->", opt)
 
-
-
-
+print("Porcentages: train-->", porc[0], "cross_val-->", porc[1], "test-->", porc[2])
+print("Optimum hyperparameters: C-->", opt[0], "Sigma--> ", opt[1])
+print("--------Precision with concatenation--------")
+aux = train_rbf_svm(np.vstack((train[0], cross_val[0])), np.concatenate((train[1],cross_val[1])), opt[0], opt[1])
+H = aux.predict(test[0])
+print("Total-->", np.sum(H==test[1])/test[1].shape[0])#pylint: disable=unsubscriptable-object    
+print("Easy-->", np.sum(H[:test_sections[0]]==test[1][:test_sections[0]])/test[1][:test_sections[0]].shape[0])#pylint: disable=unsubscriptable-object    
+print("Hard-->", np.sum(H[test_sections[0]:test_sections[1]]==test[1][test_sections[0]:test_sections[1]])/test[1][test_sections[0]:test_sections[1]].shape[0])#pylint: disable=unsubscriptable-object    
+print("Spam-->", np.sum(H[test_sections[1]:]==test[1][test_sections[1]:])/test[1][test_sections[1]:].shape[0])#pylint: disable=unsubscriptable-object    
+print("--------Precision without concatenation--------")
 aux = train_rbf_svm(train[0], train[1], opt[0], opt[1])
 H = aux.predict(test[0])
-error = np.sum((H - test[1])**2)*(1/(2*test[1].shape[0]))#pylint: disable=unsubscriptable-object
-
-print(error)
-
-print("Precision -->", np.sum(H==test[1])/test[1].shape[0])#pylint: disable=unsubscriptable-object
+print("Total-->", np.sum(H==test[1])/test[1].shape[0])#pylint: disable=unsubscriptable-object    
+print("Easy-->", np.sum(H[:test_sections[0]]==test[1][:test_sections[0]])/test[1][:test_sections[0]].shape[0])#pylint: disable=unsubscriptable-object    
+print("Hard-->", np.sum(H[test_sections[0]:test_sections[1]]==test[1][test_sections[0]:test_sections[1]])/test[1][test_sections[0]:test_sections[1]].shape[0])#pylint: disable=unsubscriptable-object    
+print("Spam-->", np.sum(H[test_sections[1]:]==test[1][test_sections[1]:])/test[1][test_sections[1]:].shape[0])#pylint: disable=unsubscriptable-object
