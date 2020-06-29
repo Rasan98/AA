@@ -2,8 +2,10 @@ Practica6/part2/easy_ham/
 Practica6/part2/hard_ham/
 Practica6/part2/spam/
 Practica6/part2/__pycache__/
-Proyecto/test
-Proyecto/train
-Proyecto/val
-Proyecto/resized
-Proyecto/data.mat
+Proyecto/test/
+Proyecto/train/
+Proyecto/val/
+Proyecto/resized/
+*.mat
+Proyecto/subdata/
+Practica4/__pycache__/  
