@@ -19,12 +19,9 @@ print("Saving")
 savemat("data300.mat", train)
 print("Saved")
 
-
-
-
 #print("Init")
-#norm = loadmat("1,7normal_train300.mat")
-#pneum = loadmat("1,7pneumonia_train300.mat")
+#norm = loadmat("ntrain300.mat")
+#pneum = loadmat("ptrain300.mat")
 #print("Loaded")
 #
 #Xn = norm["xtrain"]

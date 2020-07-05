@@ -89,12 +89,12 @@ def divide_data(X, Y, fact):
 
 
 print("Loading data")
-data = loadmat("..\\data300.mat")
+data = loadmat("..\\60_20_20_data300.mat")
 print("Data loaded")
 Xtrain = data['xtrain']
 Ytrain = data['ytrain']
 
-Xtrain, Ytrain = divide_data(Xtrain, Ytrain, 2) #Mín 1.7 with data256
+Xtrain, Ytrain = divide_data(Xtrain, Ytrain, 3) #Mín: 1.7 with data256; 
 
 Ytrain = Ytrain.transpose()
 Ytrain = Ytrain.astype(int)
@@ -103,63 +103,59 @@ print("Normalizing xtrain")
 Xtrain, medias, desv = calc_norm(Xtrain)
 print("xtrain normalized")
 
-
 num_etiquetas = 2
 Ytrain = codificaY(Ytrain,num_etiquetas)
 
-
 num_entradas = Xtrain.shape[1]
-num_ocultas = 100
+num_ocultas = 150
 params_1 = pesosAleatorios(num_entradas, num_ocultas)
 params_2 = pesosAleatorios(num_ocultas, num_etiquetas)
 params_rn = np.concatenate((np.ravel(params_1), np.ravel(params_2)))
-reg = 1
+reg = 0.1
 
-print("Training init")
-res = opt.minimize(fun=backprop_rec, x0=params_rn, args=(num_entradas, num_ocultas, num_etiquetas, Xtrain, Ytrain, reg),
-                    method="TNC", jac = True, options={"maxiter":80})
-print("Training end")
+Xval = data["xval"]
+Yval = data["yval"]
+Yval = Yval.transpose()
+Yval = Yval.astype(int)
+Yval = codificaY(Yval, num_etiquetas)
 
-thetas = res.x
-theta1 = np.reshape(thetas[:(num_ocultas * (num_entradas + 1))], (num_ocultas, (num_entradas+1)))
-theta2 = np.reshape(thetas[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
-
-dicti = {}
-dicti["theta1"] = theta1
-dicti["theta2"] = theta2
-
-Xtest = data["xtest"]
-Ytest = data["ytest"]
-
-print("Normalizing xtest")
-Xtest = aplica_norm(Xtest, medias, desv)
-print("xtest normalized")
-
-sep =  np.where(Ytest == 1)[1][0]
-X_norm = Xtest[0:sep, :]
-Y_norm = np.array([Ytest[0, 0:sep]])
-X_pneum = Xtest[sep:, :]
-Y_pneum = np.array([Ytest[0, sep:]])
+print("Normalizing xval")
+Xval = aplica_norm(Xval, medias, desv)
+print("xval normalized")
 
 
-Y_norm = Y_norm.transpose()
-Y_norm = Y_norm.astype(int)
-Y_norm = codificaY(Y_norm, num_etiquetas)
+Hs = np.array([])
+ErrTrains = np.array([])
+ErrVals = np.array([])
+nms = np.arange(1, np.minimum(len(Xtrain), len(Xval)), np.ceil(np.minimum(len(Xtrain), len(Xval))/10))
+nms = nms.astype("int")
+for i in nms:
+    auxXtrain = Xtrain[:i,:]
+    auxYtrain = Ytrain[:i,:]
+    auxXval = Xval[:i,:]
+    auxYval = Yval[:i,:]
+    print("   Training with " + str(i))
+    res = opt.minimize(fun=backprop_rec, x0=params_rn, args=(num_entradas, num_ocultas, num_etiquetas, auxXtrain, auxYtrain, reg),
+                    method="TNC", jac = True, options={"maxiter":70})
+    print("   Training end")
+    thetas = res.x
+    theta1 = np.reshape(thetas[:(num_ocultas * (num_entradas + 1))], (num_ocultas, (num_entradas+1)))
+    theta2 = np.reshape(thetas[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
+    _ , H = forwprop(theta1, theta2, np.hstack([np.ones([len(auxXval), 1]), auxXval]))
+    _ , Htrain = forwprop(theta1, theta2, np.hstack([np.ones([len(auxXtrain), 1]), auxXtrain]))
+    valErr = np.sum((H - auxYval)**2)*(1/(2*auxYval.shape[0])) #pylint: disable=unsubscriptable-object
+    trainErr = np.sum((Htrain - auxYtrain)**2)*(1/(2*auxYtrain.shape[0])) #pylint: disable=unsubscriptable-object
+    ErrTrains = np.concatenate((ErrTrains,np.array([trainErr])))
+    ErrVals = np.concatenate((ErrVals,np.array([valErr])))
 
-Y_pneum = Y_pneum.transpose()
-Y_pneum = Y_pneum.astype(int)
-Y_pneum = codificaY(Y_pneum, num_etiquetas)
+plt.figure()
+plt.plot(nms, ErrTrains, c="blue", label="Train", linestyle='-')
+plt.plot(nms, ErrVals, c="orange", label="Cross validation", linestyle='-')
+plt.legend()
+plt.xlabel("Number of training examples")
+plt.ylabel("Error")
+plt.title("reg = 0.1")
+plt.savefig("Curva.png")
 
-Ytest = Ytest.transpose()
-Ytest = Ytest.astype(int)
-Ytest = codificaY(Ytest, num_etiquetas)
-
-
-print("Starting test")
-print(" Normal precision-->" + str(calculate_precision(theta1, theta2, X_norm, Y_norm)))
-print(" Pneumonia precision-->" + str(calculate_precision(theta1, theta2, X_pneum, Y_pneum)))
-print(" Full precision-->" + str(calculate_precision(theta1, theta2, Xtest, Ytest)))
-print("Test finished")
-#savemat("weights.mat", dicti)
 
 print("Fin" * 5)

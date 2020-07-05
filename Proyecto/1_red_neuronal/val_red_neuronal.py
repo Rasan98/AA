@@ -89,12 +89,12 @@ def divide_data(X, Y, fact):
 
 #-------------------Preprocessing train data----------------------- 
 print("Loading data")
-data = loadmat("..\\data300.mat")
+data = loadmat("..\\60_20_20_data300.mat")
 print("Data loaded")
 Xtrain = data['xtrain']
 Ytrain = data['ytrain']
 
-Xtrain, Ytrain = divide_data(Xtrain, Ytrain, 5) #Mín: 1.7 with data256; 
+Xtrain, Ytrain = divide_data(Xtrain, Ytrain, 3) #Mín: 1.7 with data256; 
 
 Ytrain = Ytrain.transpose()
 Ytrain = Ytrain.astype(int)
@@ -116,6 +116,7 @@ params_rn = np.concatenate((np.ravel(params_1), np.ravel(params_2)))
 
 reg = np.array([0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30]) 
 errors = np.empty(len(reg))
+trainErrs = np.empty(len(reg))
 thetas_dict = {}
 
 Xval = data["xval"]
@@ -124,9 +125,9 @@ Yval = Yval.transpose()
 Yval = Yval.astype(int)
 Yval = codificaY(Yval, num_etiquetas)
 
-print("Normalizing xtest")
+print("Normalizing xval")
 Xval = aplica_norm(Xval, medias, desv)
-print("xtest normalized")
+print("xval normalized")
 
 print("Validation init")
 for i in np.arange(len(reg)):
@@ -138,11 +139,22 @@ for i in np.arange(len(reg)):
     theta1 = np.reshape(thetas[:(num_ocultas * (num_entradas + 1))], (num_ocultas, (num_entradas+1)))
     theta2 = np.reshape(thetas[num_ocultas * (num_entradas + 1):], (num_etiquetas, (num_ocultas + 1)))
     _ , H = forwprop(theta1, theta2, np.hstack([np.ones([len(Xval), 1]), Xval]))
+    _ , Htrain = forwprop(theta1, theta2, np.hstack([np.ones([len(Xtrain), 1]), Xtrain]))
     error = np.sum((H - Yval)**2)*(1/(2*Yval.shape[0])) #pylint: disable=unsubscriptable-object
+    trainErr = np.sum((Htrain - Ytrain)**2)*(1/(2*Ytrain.shape[0])) #pylint: disable=unsubscriptable-object
     errors[i] = error
+    trainErrs[i] = trainErr
     thetas_dict[str(reg[i])] = (theta1,theta2)
 
 print("Validation end")
+
+plt.figure()
+plt.plot(reg, trainErrs, c="blue", label="Train", linestyle='-')
+plt.plot(reg, errors, c="orange", label="Cross Validation", linestyle='-')
+plt.legend()
+plt.xlabel("lambda")
+plt.ylabel("error")
+plt.savefig("lambda_opt.png")
 
 opt = reg[np.argmin(errors)]
 print("\n\nOptimal hyperparameter-->" + str(opt) + "\n\n")
@@ -151,17 +163,37 @@ print("\n\nOptimal hyperparameter-->" + str(opt) + "\n\n")
 
 Xtest = data["xtest"]
 Ytest = data["ytest"]
-Ytest = Ytest.transpose()
-Ytest = Ytest.astype(int)
-Ytest = codificaY(Ytest, num_etiquetas)
+
 
 print("Normalizing xtest")
 Xtest = aplica_norm(Xtest, medias, desv)
 print("xtest normalized")
 
+sep =  np.where(Ytest == 1)[1][0]
+X_norm = Xtest[0:sep, :]
+Y_norm = np.array([Ytest[0, 0:sep]])
+X_pneum = Xtest[sep:, :]
+Y_pneum = np.array([Ytest[0, sep:]])
+
+Y_norm = Y_norm.transpose()
+Y_norm = Y_norm.astype(int)
+Y_norm = codificaY(Y_norm, num_etiquetas)
+
+
+Y_pneum = Y_pneum.transpose()
+Y_pneum = Y_pneum.astype(int)
+Y_pneum = codificaY(Y_pneum, num_etiquetas)
+
+Ytest = Ytest.transpose()
+Ytest = Ytest.astype(int)
+Ytest = codificaY(Ytest, num_etiquetas)
+
+
 print("Starting test")
-print(calculate_precision(thetas_dict[str(opt)][0], thetas_dict[str(opt)][1], Xtest, Ytest))
+print(" Normal precision-->" + str(calculate_precision(theta1, theta2, X_norm, Y_norm)))
+print(" Pneumonia precision-->" + str(calculate_precision(theta1, theta2, X_pneum, Y_pneum)))
+print(" Full precision-->" + str(calculate_precision(theta1, theta2, Xtest, Ytest)))
 print("Test finished")
-savemat("weights256.mat", thetas_dict)
+#savemat("weights.mat", dicti)
 
 print("Fin" * 5)
